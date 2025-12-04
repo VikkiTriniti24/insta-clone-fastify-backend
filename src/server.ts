@@ -1,4 +1,8 @@
 import Fastify from 'fastify';
+import multipart from '@fastify/multipart';
+import path from 'path';
+import fs from 'fs/promises';
+import { randomUUID } from 'crypto';
 
 import postsRoutes from './common/posts.routes';
 import databasePlugin from './core/database/database.plugin';
@@ -7,6 +11,8 @@ import taggedRoutes from './modules/tagged/tagged.routes';
 import highlightsRoutes from './modules/highlights/highlights.routes';
 
 const app = Fastify({ logger: true });
+
+app.register(multipart);
 
 app.addHook('onSend', async (_request, reply, payload) => {
   reply.header('Access-Control-Allow-Origin', '*');
