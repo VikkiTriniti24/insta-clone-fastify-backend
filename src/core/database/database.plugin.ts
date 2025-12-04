@@ -4,6 +4,7 @@ import type { Database as BetterSqlite3Database, Options as BetterSqlite3Options
 
 import type { Highlight, HighlightStory } from '../../modules/highlights/highlights.types';
 import type { TaggedPost } from '../../modules/tagged/tagged.types';
+import type { CreatePostData, Post } from '../../common/posts.service';
 import { runStatements, seedTable } from './database.transactions';
 
 declare module 'fastify' {
@@ -99,6 +100,41 @@ const INSERT_HIGHLIGHT_STORY = `
   )
 `;
 
+const CREATE_POSTS_TABLE = `
+  CREATE TABLE IF NOT EXISTS posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    img_url TEXT NOT NULL,
+    caption TEXT,
+    created_at TEXT NOT NULL
+  )
+`;
+
+const INSERT_POST = `
+  INSERT OR IGNORE INTO posts (
+    id,
+    img_url,
+    caption,
+    created_at
+  ) VALUES (
+    @id,
+    @img_url,
+    @caption,
+    @created_at
+  )
+`;
+
+const INSERT_POST_MUTATION = `
+  INSERT INTO posts (
+    img_url,
+    caption,
+    created_at
+  ) VALUES (
+    @img_url,
+    @caption,
+    @created_at
+  )
+`;
+
 const taggedPostsSeedData: TaggedPost[] = [
   {
     id: 101,
@@ -182,6 +218,27 @@ const highlightStoriesSeedData: HighlightStorySeedRow[] = [
   },
 ];
 
+const postsSeedData: Post[] = [
+  {
+    id: 1,
+    img_url: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee',
+    caption: 'Golden hour on the coast ✨',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    img_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba',
+    caption: 'Focus on the grind 📸',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 3,
+    img_url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e',
+    caption: 'City lights never sleep 🌃',
+    created_at: new Date().toISOString(),
+  },
+];
+
 const initializeTaggedPosts = (db: BetterSqlite3Database) => {
   runStatements(db, [CREATE_TAGGED_POSTS_TABLE]);
 
@@ -196,6 +253,19 @@ const initializeTaggedPosts = (db: BetterSqlite3Database) => {
   }));
 
   seedTable(db, INSERT_TAGGED_POST, rowsToInsert);
+};
+
+const initializePosts = (db: BetterSqlite3Database) => {
+  runStatements(db, [CREATE_POSTS_TABLE]);
+
+  const rowsToInsert = postsSeedData.map((post) => ({
+    id: post.id,
+    img_url: post.img_url,
+    caption: post.caption,
+    created_at: post.created_at,
+  }));
+
+  seedTable(db, INSERT_POST, rowsToInsert);
 };
 
 const initializeHighlights = (db: BetterSqlite3Database) => {
@@ -218,8 +288,31 @@ const databasePlugin = fp<DatabasePluginOptions>(async (fastify, opts) => {
   const db = new DatabaseConstructor(filename, opts.options);
 
   fastify.decorate('db', db);
+  initializePosts(db);
   initializeTaggedPosts(db);
   initializeHighlights(db);
+
+  const postsInsertStatement = db.prepare(INSERT_POST_MUTATION);
+
+  fastify.decorate('transactions', {
+    posts: {
+      create: (data: CreatePostData): Post => {
+        const created_at = new Date().toISOString();
+        const result = postsInsertStatement.run({
+          img_url: data.img_url,
+          caption: data.caption,
+          created_at,
+        });
+
+        return {
+          id: Number(result.lastInsertRowid),
+          img_url: data.img_url,
+          caption: data.caption,
+          created_at,
+        };
+      },
+    },
+  });
 
   fastify.addHook('onClose', (instance, done) => {
     if (instance.db.open) {
