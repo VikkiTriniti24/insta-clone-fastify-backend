@@ -12,6 +12,7 @@
     "start": "node build/server.js",
     "dev": "tsx watch src/server.ts",
     "poststart": "rimraf build",
+    "test": "tsx --test",
     "lint": "eslint ."
   },
   "keywords": [],

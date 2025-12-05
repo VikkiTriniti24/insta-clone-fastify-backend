@@ -2,8 +2,9 @@ import Fastify from 'fastify';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import taggedRoutes from '../src/modules/tagged/tagged.routes';
-import { taggedGridSchema, type TaggedPost } from '../src/modules/tagged/tagged.types';
+import taggedRoutes from '../src/modules/tagged/tagged.routes.ts';
+import { taggedGridSchema, type TaggedPost } from '../src/modules/tagged/tagged.types.ts';
+import databasePlugin from '../src/core/database/database.plugin.ts';
 
 const expectedTaggedGrid: TaggedPost[] = [
   {
@@ -55,6 +56,7 @@ describe('Tagged routes', () => {
       await app.close();
     });
 
+    await app.register(databasePlugin);
     await app.register(taggedRoutes);
 
     const response = await app.inject({

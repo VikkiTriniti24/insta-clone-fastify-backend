@@ -2,8 +2,8 @@ import Fastify from 'fastify';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import postsRoutes from '../src/common/posts.routes';
-import databasePlugin from '../src/core/database/database.plugin';
+import postsRoutes from '../src/common/posts.routes.ts';
+import databasePlugin from '../src/core/database/database.plugin.ts';
 
 describe('Posts routes', () => {
   it('should get all posts and return them with a 200 status code', async (t) => {

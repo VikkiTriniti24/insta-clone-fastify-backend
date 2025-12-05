@@ -2,8 +2,8 @@ import Fastify from 'fastify';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import highlightsRoutes from '../src/modules/highlights/highlights.routes';
-import databasePlugin from '../src/core/database/database.plugin';
+import highlightsRoutes from '../src/modules/highlights/highlights.routes.ts';
+import databasePlugin from '../src/core/database/database.plugin.ts';
 
 type HighlightStory = {
   id: number;
